@@ -2,87 +2,479 @@
 <html lang="ja">
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>花咲じいさん - 灰まきゲーム</title>
-    <link rel="stylesheet" href="TemplateData/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            touch-action: none;
+        }
+        #gameCanvas {
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            cursor: crosshair;
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            text-shadow: 1px 1px 2px white;
+        }
+        #result {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 30px 50px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        #result h2 {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+        #result p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        #retryBtn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #retryBtn:hover {
+            background: #45a049;
+        }
+        #instruction {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #555;
+            text-shadow: 1px 1px 2px white;
+        }
+    </style>
 </head>
 <body>
-    <div id="unity-container" class="unity-desktop">
-        <canvas id="unity-canvas" tabindex="-1"></canvas>
-        <div id="unity-loading-bar">
-            <div id="unity-logo"></div>
-            <div id="unity-progress-bar-empty">
-                <div id="unity-progress-bar-full"></div>
-            </div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <span id="timer">残り時間: 30秒</span>
+            <span id="ashCount">灰: 0個</span>
         </div>
-        <div id="unity-warning"></div>
+        <div id="result">
+            <h2 id="resultTitle"></h2>
+            <p id="resultMessage"></p>
+            <button id="retryBtn">もう一度遊ぶ</button>
+        </div>
+        <div id="instruction">クリック/タップで灰をまこう！（目標: 10〜20個）</div>
     </div>
+
     <script>
-        var container = document.querySelector("#unity-container");
-        var canvas = document.querySelector("#unity-canvas");
-        var loadingBar = document.querySelector("#unity-loading-bar");
-        var progressBarFull = document.querySelector("#unity-progress-bar-full");
-        var warningBanner = document.querySelector("#unity-warning");
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const timerEl = document.getElementById('timer');
+        const ashCountEl = document.getElementById('ashCount');
+        const resultEl = document.getElementById('result');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultMessage = document.getElementById('resultMessage');
+        const retryBtn = document.getElementById('retryBtn');
 
-        // モバイル対応
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            container.className = "unity-mobile";
-            // モバイルではフルスクリーン風に
-            canvas.style.width = "100%";
-            canvas.style.height = "100%";
-        }
+        // ゲーム設定
+        const GAME_TIME = 30;
+        const MIN_ASH = 10;
+        const MAX_ASH = 20;
 
-        function unityShowBanner(msg, type) {
-            function updateBannerVisibility() {
-                warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-            }
-            var div = document.createElement('div');
-            div.innerHTML = msg;
-            warningBanner.appendChild(div);
-            if (type == 'error') div.style = 'background: red; padding: 10px;';
-            else {
-                if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-                setTimeout(function() {
-                    warningBanner.removeChild(div);
-                    updateBannerVisibility();
-                }, 5000);
-            }
-            updateBannerVisibility();
-        }
+        // ゲーム状態
+        let gameRunning = false;
+        let timeLeft = GAME_TIME;
+        let ashOnTree = 0;
+        let ashes = [];
+        let particles = [];
+        let treeBloom = 0;
+        let lastTime = 0;
 
-        var buildUrl = "Build";
-        var loaderUrl = buildUrl + "/Build.loader.js";
-        var config = {
-            dataUrl: buildUrl + "/Build.data.gz",
-            frameworkUrl: buildUrl + "/Build.framework.js.gz",
-            codeUrl: buildUrl + "/Build.wasm.gz",
-            streamingAssetsUrl: "StreamingAssets",
-            companyName: "Hanasaka",
-            productName: "HanasakaJisan",
-            productVersion: "1.0",
-            showBanner: unityShowBanner,
+        // 木の位置とサイズ
+        const tree = {
+            x: 400,
+            y: 450,
+            trunkWidth: 40,
+            trunkHeight: 150,
+            crownRadius: 120
         };
 
-        // ブラウザのWebGL対応チェック
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            container.className = "unity-mobile";
+        // 灰クラス
+        class Ash {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vy = 2 + Math.random() * 2;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.size = 4 + Math.random() * 4;
+                this.alpha = 1;
+                this.counted = false;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.1; // 重力
+                this.vx *= 0.99; // 空気抵抗
+
+                // 木との当たり判定
+                if (!this.counted) {
+                    const dx = this.x - tree.x;
+                    const dy = this.y - (tree.y - tree.trunkHeight - 30);
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < tree.crownRadius + this.size) {
+                        this.counted = true;
+                        ashOnTree++;
+                        // パーティクル生成
+                        for (let i = 0; i < 5; i++) {
+                            particles.push(new Particle(this.x, this.y));
+                        }
+                        return false;
+                    }
+                }
+
+                // 画面外チェック
+                return this.y < canvas.height + 50;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(128, 128, 128, ${this.alpha})`;
+                ctx.fill();
+            }
         }
 
-        loadingBar.style.display = "block";
+        // パーティクルクラス（灰が当たった時のエフェクト）
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.life = 1;
+                this.color = Math.random() > 0.5 ? '#FFB7C5' : '#FFC0CB';
+            }
 
-        var script = document.createElement("script");
-        script.src = loaderUrl;
-        script.onload = () => {
-            createUnityInstance(canvas, config, (progress) => {
-                progressBarFull.style.width = 100 * progress + "%";
-            }).then((unityInstance) => {
-                loadingBar.style.display = "none";
-            }).catch((message) => {
-                alert(message);
-            });
-        };
-        document.body.appendChild(script);
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.02;
+                return this.life > 0;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.life;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // 木を描画
+        function drawTree() {
+            // 幹
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(
+                tree.x - tree.trunkWidth / 2,
+                tree.y - tree.trunkHeight,
+                tree.trunkWidth,
+                tree.trunkHeight
+            );
+
+            // 枝（装飾）
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(tree.x - 10, tree.y - tree.trunkHeight + 30);
+            ctx.lineTo(tree.x - 50, tree.y - tree.trunkHeight - 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(tree.x + 10, tree.y - tree.trunkHeight + 50);
+            ctx.lineTo(tree.x + 60, tree.y - tree.trunkHeight);
+            ctx.stroke();
+
+            // 樹冠（灰の量に応じて色が変わる）
+            const bloomProgress = Math.min(ashOnTree / MIN_ASH, 1);
+            const overBloom = ashOnTree > MAX_ASH;
+
+            let crownColor;
+            if (overBloom) {
+                // 灰が多すぎる - 茶色っぽく
+                crownColor = '#A0522D';
+            } else if (bloomProgress >= 1) {
+                // 満開 - ピンク
+                crownColor = '#FFB7C5';
+            } else {
+                // 徐々にピンクに
+                const r = Math.floor(139 + (255 - 139) * bloomProgress);
+                const g = Math.floor(90 + (183 - 90) * bloomProgress);
+                const b = Math.floor(43 + (197 - 43) * bloomProgress);
+                crownColor = `rgb(${r}, ${g}, ${b})`;
+            }
+
+            ctx.beginPath();
+            ctx.arc(tree.x, tree.y - tree.trunkHeight - 30, tree.crownRadius, 0, Math.PI * 2);
+            ctx.fillStyle = crownColor;
+            ctx.fill();
+
+            // 桜の花びら（開花時）
+            if (bloomProgress > 0.5 && !overBloom) {
+                const flowerCount = Math.floor(bloomProgress * 30);
+                for (let i = 0; i < flowerCount; i++) {
+                    const angle = (i / flowerCount) * Math.PI * 2;
+                    const r = tree.crownRadius * 0.7 * Math.random();
+                    const fx = tree.x + Math.cos(angle) * r;
+                    const fy = tree.y - tree.trunkHeight - 30 + Math.sin(angle) * r;
+
+                    ctx.beginPath();
+                    ctx.arc(fx, fy, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#FFF0F5';
+                    ctx.fill();
+                }
+            }
+        }
+
+        // 地面を描画
+        function drawGround() {
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(0, tree.y, canvas.width, canvas.height - tree.y);
+
+            // 草のテクスチャ
+            ctx.fillStyle = '#32CD32';
+            for (let i = 0; i < canvas.width; i += 20) {
+                const h = 5 + Math.random() * 10;
+                ctx.fillRect(i, tree.y - h, 3, h);
+            }
+        }
+
+        // おじいさんを描画
+        function drawJisan() {
+            const jx = 150;
+            const jy = tree.y - 10;
+
+            // 体
+            ctx.fillStyle = '#4169E1';
+            ctx.beginPath();
+            ctx.ellipse(jx, jy - 40, 25, 35, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 頭
+            ctx.fillStyle = '#FFDAB9';
+            ctx.beginPath();
+            ctx.arc(jx, jy - 90, 25, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 髪（白髪）
+            ctx.fillStyle = '#DCDCDC';
+            ctx.beginPath();
+            ctx.arc(jx, jy - 100, 20, Math.PI, 0);
+            ctx.fill();
+
+            // 目
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(jx - 8, jy - 92, 3, 0, Math.PI * 2);
+            ctx.arc(jx + 8, jy - 92, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 笑顔
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(jx, jy - 85, 10, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+
+            // 腕（灰をまくポーズ）
+            ctx.strokeStyle = '#FFDAB9';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(jx + 20, jy - 50);
+            ctx.lineTo(jx + 60, jy - 80);
+            ctx.stroke();
+
+            // 灰袋
+            ctx.fillStyle = '#D2B48C';
+            ctx.beginPath();
+            ctx.ellipse(jx - 30, jy - 30, 15, 20, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 背景を描画
+        function drawBackground() {
+            // 空のグラデーション
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#E0F6FF');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 雲
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            drawCloud(100, 80, 50);
+            drawCloud(600, 120, 40);
+            drawCloud(350, 60, 35);
+        }
+
+        function drawCloud(x, y, size) {
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.8, y - size * 0.2, size * 0.7, 0, Math.PI * 2);
+            ctx.arc(x + size * 1.5, y, size * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // ゲームループ
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const delta = timestamp - lastTime;
+            lastTime = timestamp;
+
+            // 背景描画
+            drawBackground();
+            drawGround();
+            drawTree();
+            drawJisan();
+
+            // 灰の更新と描画
+            ashes = ashes.filter(ash => ash.update());
+            ashes.forEach(ash => ash.draw());
+
+            // パーティクルの更新と描画
+            particles = particles.filter(p => p.update());
+            particles.forEach(p => p.draw());
+
+            // UI更新
+            ashCountEl.textContent = `灰: ${ashOnTree}個`;
+
+            if (gameRunning) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // タイマー更新
+        function updateTimer() {
+            if (!gameRunning) return;
+
+            timeLeft--;
+            timerEl.textContent = `残り時間: ${timeLeft}秒`;
+
+            if (timeLeft <= 0) {
+                endGame();
+            } else {
+                setTimeout(updateTimer, 1000);
+            }
+        }
+
+        // ゲーム終了
+        function endGame() {
+            gameRunning = false;
+
+            let title, message;
+
+            if (ashOnTree >= MIN_ASH && ashOnTree <= MAX_ASH) {
+                title = '🌸 大成功！🌸';
+                message = `${ashOnTree}個の灰で枯れ木が満開の桜に！\nおじいさんも大喜び！`;
+            } else if (ashOnTree < MIN_ASH) {
+                title = '😢 残念...';
+                message = `灰が足りませんでした（${ashOnTree}個）\n${MIN_ASH}個以上まきましょう`;
+            } else {
+                title = '😵 まきすぎ！';
+                message = `灰をまきすぎました（${ashOnTree}個）\n${MAX_ASH}個以下に抑えましょう`;
+            }
+
+            resultTitle.textContent = title;
+            resultMessage.textContent = message;
+            resultEl.style.display = 'block';
+        }
+
+        // 灰をまく
+        function spawnAsh(x, y) {
+            if (!gameRunning) return;
+
+            // クリック位置から複数の灰を生成
+            for (let i = 0; i < 3; i++) {
+                const offsetX = (Math.random() - 0.5) * 30;
+                const offsetY = (Math.random() - 0.5) * 20;
+                ashes.push(new Ash(x + offsetX, y + offsetY));
+            }
+        }
+
+        // ゲーム開始
+        function startGame() {
+            gameRunning = true;
+            timeLeft = GAME_TIME;
+            ashOnTree = 0;
+            ashes = [];
+            particles = [];
+            lastTime = 0;
+
+            resultEl.style.display = 'none';
+            timerEl.textContent = `残り時間: ${timeLeft}秒`;
+            ashCountEl.textContent = `灰: 0個`;
+
+            requestAnimationFrame(gameLoop);
+            setTimeout(updateTimer, 1000);
+        }
+
+        // イベントリスナー
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            spawnAsh(x, y);
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            spawnAsh(x, y);
+        });
+
+        retryBtn.addEventListener('click', startGame);
+
+        // ゲーム開始
+        startGame();
     </script>
 </body>
 </html>
