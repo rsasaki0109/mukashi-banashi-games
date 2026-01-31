@@ -65,10 +65,151 @@ const CONFIG = {
     ultimateCooldown: 5000
 };
 
+// タイトル・ルール説明シーン
+class TitleScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'TitleScene' });
+    }
+
+    create() {
+        const centerX = CONFIG.width / 2;
+
+        // 背景
+        const bg = this.add.graphics();
+        bg.fillStyle(0x1a1a2e, 1);
+        bg.fillRect(0, 0, CONFIG.width, CONFIG.height);
+
+        // タイトル
+        this.add.text(centerX, 60, 'Mukashi Party Battle', {
+            fontSize: '36px',
+            fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+            color: '#ffcc00',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+
+        this.add.text(centerX, 100, '〜 昔話パーティバトル 〜', {
+            fontSize: '18px',
+            fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+        // キャラクター紹介
+        const charY = 170;
+        this.add.text(centerX, charY, '【 仲間キャラクター 】', {
+            fontSize: '16px',
+            fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+            color: '#88ff88'
+        }).setOrigin(0.5);
+
+        const chars = [
+            { name: '桃太郎', color: '#ff6b9d', role: 'リーダー', desc: '前方斬撃 / きびだんご(回復)' },
+            { name: '金太郎', color: '#ffd700', role: 'タンク', desc: '周囲攻撃 / まさかり強撃' },
+            { name: '一寸法師', color: '#6bcfff', role: 'スピード', desc: '突進攻撃 / 連続突進' }
+        ];
+
+        chars.forEach((char, i) => {
+            const y = charY + 30 + i * 28;
+            // 色付き四角
+            const box = this.add.graphics();
+            box.fillStyle(Phaser.Display.Color.HexStringToColor(char.color).color, 1);
+            box.fillRect(180, y - 8, 16, 16);
+            // テキスト
+            this.add.text(205, y, `${char.name}(${char.role})`, {
+                fontSize: '13px',
+                fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+                color: char.color
+            }).setOrigin(0, 0.5);
+            this.add.text(360, y, char.desc, {
+                fontSize: '12px',
+                fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+                color: '#cccccc'
+            }).setOrigin(0, 0.5);
+        });
+
+        // 操作説明
+        const ctrlY = 300;
+        this.add.text(centerX, ctrlY, '【 操作方法 】', {
+            fontSize: '16px',
+            fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+            color: '#88ff88'
+        }).setOrigin(0.5);
+
+        const controls = [
+            { key: 'WASD / 矢印', action: 'パーティ移動' },
+            { key: 'J', action: '通常攻撃（全員同時）' },
+            { key: 'K', action: '固有スキル（2秒クールタイム）' },
+            { key: 'L', action: '合体技「桃金寸 三位一体」（5秒CT、2人以上生存時）' }
+        ];
+
+        controls.forEach((ctrl, i) => {
+            const y = ctrlY + 30 + i * 26;
+            this.add.text(200, y, ctrl.key, {
+                fontSize: '14px',
+                fontFamily: 'monospace',
+                color: '#ffff88'
+            }).setOrigin(0, 0.5);
+            this.add.text(340, y, ctrl.action, {
+                fontSize: '13px',
+                fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+                color: '#ffffff'
+            }).setOrigin(0, 0.5);
+        });
+
+        // ルール
+        const ruleY = 440;
+        this.add.text(centerX, ruleY, '【 ルール 】', {
+            fontSize: '16px',
+            fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+            color: '#88ff88'
+        }).setOrigin(0.5);
+
+        this.add.text(centerX, ruleY + 28, '3人のキャラを同時に操作して鬼を倒せ！', {
+            fontSize: '14px',
+            fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+        this.add.text(centerX, ruleY + 52, '全員倒されるとゲームオーバー', {
+            fontSize: '13px',
+            fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
+            color: '#ff8888'
+        }).setOrigin(0.5);
+
+        // スタート案内
+        const startText = this.add.text(centerX, 550, 'PRESS SPACE OR ENTER TO START', {
+            fontSize: '20px',
+            fontFamily: 'sans-serif',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+        // 点滅アニメーション
+        this.tweens.add({
+            targets: startText,
+            alpha: 0.3,
+            duration: 600,
+            yoyo: true,
+            repeat: -1
+        });
+
+        // 入力待ち
+        this.input.keyboard.once('keydown-SPACE', () => this.startGame());
+        this.input.keyboard.once('keydown-ENTER', () => this.startGame());
+    }
+
+    startGame() {
+        this.scene.start('MainScene');
+    }
+}
+
 // メインシーン
 class MainScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainScene' });
+    }
+
+    init() {
+        // シーン開始時に状態をリセット
         this.party = [];
         this.enemy = null;
         this.gameOver = false;
@@ -915,7 +1056,7 @@ class MainScene extends Phaser.Scene {
             }).setOrigin(0.5);
 
             this.input.keyboard.once('keydown-R', () => {
-                this.scene.restart();
+                this.scene.start('TitleScene');
             });
         }
     }
@@ -928,7 +1069,7 @@ const game = new Phaser.Game({
     height: CONFIG.height,
     parent: 'game-container',
     backgroundColor: CONFIG.backgroundColor,
-    scene: [MainScene],
+    scene: [TitleScene, MainScene],
     physics: {
         default: 'arcade',
         arcade: {
