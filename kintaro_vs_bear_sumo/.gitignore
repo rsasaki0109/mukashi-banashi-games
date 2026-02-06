@@ -1,0 +1,55 @@
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# IDE
+.idea/
+.vs/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Unity3D Packages
+*.unitypackage
+
+# Crashlytics
+crashlytics-build.properties
+sysinfo.txt
+
+# Asset Store
+.upm-credentials.toml
+
+# Rider
+.idea/
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+
+# ビルドはdocsに出力するので除外しない
+# docs/
