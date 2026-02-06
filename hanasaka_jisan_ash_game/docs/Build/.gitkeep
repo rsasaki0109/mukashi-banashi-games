@@ -1,0 +1,8 @@
+# WebGL ビルド出力先
+# Unity で WebGL ビルド後、ここにファイルが配置されます
+#
+# 期待されるファイル:
+# - Build.loader.js
+# - Build.data.gz
+# - Build.framework.js.gz
+# - Build.wasm.gz

@@ -1,0 +1,23 @@
+{
+  "name": "hanasaka_jisan_ash_game",
+  "version": "1.0.0",
+  "description": "日本昔話「花咲じいさん」をモチーフにしたミニゲーム。 プレイヤーは灰をまき、枯れ木を桜で満開にします。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "serve -l 8080 docs",
+    "record": "node scripts/record-gameplay.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.58.1"
+  },
+  "devDependencies": {
+    "serve": "^14.2.5"
+  }
+}
