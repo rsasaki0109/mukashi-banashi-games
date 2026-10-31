@@ -91,12 +91,27 @@
         #result h2 { font-size: clamp(18px, 4vw, 28px); }
         #result p { white-space: pre-line; }
         .back-link { position: fixed; top: 8px; left: 10px; z-index: 2; background: #fffdf4e8; color: #263c34; padding: 4px 10px; border-radius: 5px; font-size: 12px; text-decoration: none; }
+        body { background: #f5f1e8; color: #263c34; }
+        #gameCanvas { box-shadow: 0 15px 60px #263c3420; }
+        #ui { top: 20px; left: 20px; right: 20px; color: #263c34; font-size: clamp(12px,2.4vw,18px); }
+        #result { z-index: 3; border: 1px solid #d9dccb; background: #fffdf4f5; }
+        #retryBtn, #startBtn, #finishBtn { background: #ae4a38; border: 0; border-radius: 8px; color: white; padding: 12px 22px; cursor: pointer; font: inherit; }
+        #welcome { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; text-align: center; padding: 20px; background: #f5f1e8ed; border-radius: 8px; }
+        #welcome h1 { font-family: serif; font-size: clamp(26px,5vw,42px); margin-bottom: 16px; }
+        #welcome p { font-size: clamp(12px,2.5vw,18px); margin-bottom: 20px; line-height: 1.9; }
+        #bloomMeter { position: absolute; top: 55px; left: 20px; right: 20px; height: 8px; width: calc(100% - 40px); accent-color: #ae4a38; }
+        #finishBtn { position: absolute; right: 18px; bottom: 35px; font-size: clamp(11px,2vw,15px); }
+        #instruction { bottom: 10px; color: #263c34; }
+        button:focus-visible, a:focus-visible { outline: 3px solid #263c34; outline-offset: 3px; }
     </style>
 </head>
 <body>
     <a class="back-link" href="../../">← ゲーム一覧</a>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="welcome"><h1>枯れ木に、春を。</h1><p>木の上をクリック・タップで灰をまこう。<br>1回で3個。木に当たった灰が10〜20個で成功！<br>ちょうどよく咲いたら「できあがり」を押そう。</p><button id="startBtn">灰まきをはじめる</button></div>
+        <meter id="bloomMeter" min="0" max="21" low="10" high="20" optimum="15" value="0" aria-label="木に当たった灰の数"></meter>
+        <button id="finishBtn" hidden>できあがり！</button>
         <div id="ui">
             <span id="timer">残り時間: 30秒</span>
             <span id="ashCount">灰: 0個</span>
@@ -106,7 +121,7 @@
             <p id="resultMessage"></p>
             <button id="retryBtn">もう一度遊ぶ</button>
         </div>
-        <div id="instruction">クリック/タップで灰をまこう！（目標: 10〜20個）</div>
+        <div id="instruction">クリック/タップで灰をまこう！（10〜20個で「できあがり」）</div>
     </div>
 
     <script>
@@ -132,6 +147,14 @@
         let particles = [];
         let treeBloom = 0;
         let lastTime = 0;
+        let simulationStep = 1;
+        let frameId = null;
+        let settling = false;
+        let settleTime = 0;
+        let best = 0;
+        try { best = Number(localStorage.getItem('hanasaka-best')) || 0; } catch {}
+        const finishBtn = document.getElementById('finishBtn');
+        const meter = document.getElementById('bloomMeter');
 
         // 木の位置とサイズ
         const tree = {
@@ -155,10 +178,10 @@
             }
 
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.vy += 0.1; // 重力
-                this.vx *= 0.99; // 空気抵抗
+                this.x += this.vx * simulationStep;
+                this.y += this.vy * simulationStep;
+                this.vy += 0.1 * simulationStep; // 重力
+                this.vx *= Math.pow(0.99, simulationStep); // 空気抵抗
 
                 // 木との当たり判定
                 if (!this.counted) {
@@ -201,9 +224,9 @@
             }
 
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.life -= 0.02;
+                this.x += this.vx * simulationStep;
+                this.y += this.vy * simulationStep;
+                this.life -= 0.02 * simulationStep;
                 return this.life > 0;
             }
 
@@ -269,7 +292,7 @@
                 const flowerCount = Math.floor(bloomProgress * 30);
                 for (let i = 0; i < flowerCount; i++) {
                     const angle = (i / flowerCount) * Math.PI * 2;
-                    const r = tree.crownRadius * 0.7 * Math.random();
+                    const r = tree.crownRadius * 0.7 * (0.25 + ((i * 0.618) % 0.75));
                     const fx = tree.x + Math.cos(angle) * r;
                     const fy = tree.y - tree.trunkHeight - 30 + Math.sin(angle) * r;
 
@@ -283,13 +306,13 @@
 
         // 地面を描画
         function drawGround() {
-            ctx.fillStyle = '#228B22';
+            ctx.fillStyle = '#9aaf82';
             ctx.fillRect(0, tree.y, canvas.width, canvas.height - tree.y);
 
             // 草のテクスチャ
-            ctx.fillStyle = '#32CD32';
+            ctx.fillStyle = '#829b70';
             for (let i = 0; i < canvas.width; i += 20) {
-                const h = 5 + Math.random() * 10;
+                const h = 5 + (Math.sin(i * 2.4) + 1) * 5;
                 ctx.fillRect(i, tree.y - h, 3, h);
             }
         }
@@ -300,7 +323,7 @@
             const jy = tree.y - 10;
 
             // 体
-            ctx.fillStyle = '#4169E1';
+            ctx.fillStyle = '#718e85';
             ctx.beginPath();
             ctx.ellipse(jx, jy - 40, 25, 35, 0, 0, Math.PI * 2);
             ctx.fill();
@@ -350,8 +373,8 @@
         function drawBackground() {
             // 空のグラデーション
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, '#87CEEB');
-            gradient.addColorStop(1, '#E0F6FF');
+            gradient.addColorStop(0, '#c6d9cf');
+            gradient.addColorStop(1, '#f3edd9');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -373,7 +396,8 @@
         // ゲームループ
         function gameLoop(timestamp) {
             if (!lastTime) lastTime = timestamp;
-            const delta = timestamp - lastTime;
+            const delta = Math.min(timestamp - lastTime, 50);
+            simulationStep = delta / (1000 / 60);
             lastTime = timestamp;
 
             // 背景描画
@@ -393,23 +417,25 @@
             // UI更新
             ashCountEl.textContent = `灰: ${ashOnTree}個`;
 
+            meter.value = ashOnTree;
             if (gameRunning) {
-                requestAnimationFrame(gameLoop);
+                if (!settling) timeLeft = Math.max(0, timeLeft - delta / 1000);
+                timerEl.textContent = settling ? '灰が落ちるのを待っています…' : '残り時間: ' + Math.ceil(timeLeft) + '秒';
+                finishBtn.hidden = settling;
+                if (timeLeft <= 0 && !settling) finish();
+                if (settling) {
+                    settleTime += delta;
+                    if (ashes.length === 0 || settleTime > 4000) endGame();
+                }
             }
+            frameId = requestAnimationFrame(gameLoop);
         }
 
-        // タイマー更新
-        function updateTimer() {
-            if (!gameRunning) return;
-
-            timeLeft--;
-            timerEl.textContent = `残り時間: ${timeLeft}秒`;
-
-            if (timeLeft <= 0) {
-                endGame();
-            } else {
-                setTimeout(updateTimer, 1000);
-            }
+        function finish() {
+            if (!gameRunning || settling) return;
+            settling = true;
+            settleTime = 0;
+            finishBtn.hidden = true;
         }
 
         // ゲーム終了
@@ -429,6 +455,10 @@
                 message = `灰をまきすぎました（${ashOnTree}個）\n${MAX_ASH}個以下に抑えましょう`;
             }
 
+            const score = ashOnTree >= MIN_ASH && ashOnTree <= MAX_ASH ? Math.max(0, 100 - Math.abs(15 - ashOnTree) * 10) : 0;
+            best = Math.max(best, score);
+            try { localStorage.setItem('hanasaka-best', String(best)); } catch {}
+            message += '\n開花点: ' + score + '点 ／ 自己ベスト: ' + best + '点';
             resultTitle.textContent = title;
             resultMessage.textContent = message;
             resultEl.style.display = 'block';
@@ -436,7 +466,7 @@
 
         // 灰をまく
         function spawnAsh(x, y) {
-            if (!gameRunning) return;
+            if (!gameRunning || settling) return;
 
             // クリック位置から複数の灰を生成
             for (let i = 0; i < 3; i++) {
@@ -448,6 +478,12 @@
 
         // ゲーム開始
         function startGame() {
+            if (frameId !== null) cancelAnimationFrame(frameId);
+            settling = false;
+            settleTime = 0;
+            finishBtn.hidden = false;
+            document.getElementById('welcome').hidden = true;
+            document.getElementById('welcome').style.display = 'none';
             gameRunning = true;
             timeLeft = GAME_TIME;
             ashOnTree = 0;
@@ -459,31 +495,20 @@
             timerEl.textContent = `残り時間: ${timeLeft}秒`;
             ashCountEl.textContent = `灰: 0個`;
 
-            requestAnimationFrame(gameLoop);
-            setTimeout(updateTimer, 1000);
+            frameId = requestAnimationFrame(gameLoop);
         }
 
-        // イベントリスナー
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left) * canvas.width / rect.width;
-            const y = (e.clientY - rect.top) * canvas.height / rect.height;
-            spawnAsh(x, y);
-        });
-
-        canvas.addEventListener('touchstart', (e) => {
+        canvas.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            const x = (touch.clientX - rect.left) * canvas.width / rect.width;
-            const y = (touch.clientY - rect.top) * canvas.height / rect.height;
-            spawnAsh(x, y);
+            spawnAsh((e.clientX - rect.left) * canvas.width / rect.width,
+                     (e.clientY - rect.top) * canvas.height / rect.height);
         });
-
         retryBtn.addEventListener('click', startGame);
-
-        // ゲーム開始
-        startGame();
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        finishBtn.addEventListener('click', finish);
+        document.addEventListener('visibilitychange', () => { lastTime = 0; });
+        drawBackground(); drawGround(); drawTree(); drawJisan();
     </script>
 </body>
 </html>

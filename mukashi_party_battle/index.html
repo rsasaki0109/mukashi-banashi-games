@@ -8,7 +8,18 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
 <body>
-    <div id="game-container"></div>
+    <main class="shell"><header><a href="../">← ゲーム一覧</a><span>三幕の鬼退治</span><button id="pause" type="button">一時停止</button></header><div id="game-container"></div><p class="guide">移動 WASD / 矢印　・　J 押しっぱなしで攻撃　・　K 回復とスキル　・　L 合体技</p><p class="guide">鬼の予告線を見たら逃げよう。幕の合間に生存者のHPが25回復します。</p><p id="pause-status" role="status"></p></main>
     <script src="main.js"></script>
-</body>
+<script>
+const pauseButton = document.getElementById('pause');
+let paused = false;
+pauseButton.addEventListener('click', () => {
+    if (!game.scene.isActive('MainScene') && !paused) return;
+    paused = !paused;
+    if (paused) game.scene.pause('MainScene');
+    else game.scene.resume('MainScene');
+    pauseButton.textContent = paused ? '再開する' : '一時停止';
+    document.getElementById('pause-status').textContent = paused ? '一時停止中です。「再開する」で続けられます。' : '';
+});
+</script></body>
 </html>

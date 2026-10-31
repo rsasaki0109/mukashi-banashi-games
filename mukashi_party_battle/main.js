@@ -76,19 +76,19 @@ class TitleScene extends Phaser.Scene {
 
         // 背景
         const bg = this.add.graphics();
-        bg.fillStyle(0x1a1a2e, 1);
+        bg.fillStyle(0x203d34, 1);
         bg.fillRect(0, 0, CONFIG.width, CONFIG.height);
 
         // タイトル
-        this.add.text(centerX, 60, 'Mukashi Party Battle', {
+        this.add.text(centerX, 60, '昔話パーティーバトル', {
             fontSize: '36px',
             fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
-            color: '#ffcc00',
+            color: '#f5deb0',
             stroke: '#000000',
             strokeThickness: 4
         }).setOrigin(0.5);
 
-        this.add.text(centerX, 100, '〜 昔話パーティバトル 〜', {
+        this.add.text(centerX, 100, '三人の力で、三幕の鬼退治へ。', {
             fontSize: '18px',
             fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
             color: '#ffffff'
@@ -137,7 +137,7 @@ class TitleScene extends Phaser.Scene {
 
         const controls = [
             { key: 'WASD / 矢印', action: 'パーティ移動' },
-            { key: 'J', action: '通常攻撃（全員同時）' },
+            { key: 'J', action: '通常攻撃（押しっぱなしで連続攻撃）' },
             { key: 'K', action: '固有スキル（2秒クールタイム）' },
             { key: 'L', action: '合体技「桃金寸 三位一体」（5秒CT、2人以上生存時）' }
         ];
@@ -164,20 +164,20 @@ class TitleScene extends Phaser.Scene {
             color: '#88ff88'
         }).setOrigin(0.5);
 
-        this.add.text(centerX, ruleY + 28, '3人のキャラを同時に操作して鬼を倒せ！', {
+        this.add.text(centerX, ruleY + 28, '3人を同時に操作して、3体の鬼を倒そう！', {
             fontSize: '14px',
             fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
             color: '#ffffff'
         }).setOrigin(0.5);
 
-        this.add.text(centerX, ruleY + 52, '全員倒されるとゲームオーバー', {
+        this.add.text(centerX, ruleY + 52, '突進の予告線から逃げよう。幕の合間に生存者のHP回復。', {
             fontSize: '13px',
             fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
             color: '#ff8888'
         }).setOrigin(0.5);
 
         // スタート案内
-        const startText = this.add.text(centerX, 550, 'PRESS SPACE OR ENTER TO START', {
+        const startText = this.add.text(centerX, 550, 'SPACE / ENTER / クリックで出発', {
             fontSize: '20px',
             fontFamily: 'sans-serif',
             color: '#ffffff'
@@ -192,6 +192,7 @@ class TitleScene extends Phaser.Scene {
             repeat: -1
         });
 
+        this.input.once('pointerdown', () => this.startGame());
         // 入力待ち
         this.input.keyboard.once('keydown-SPACE', () => this.startGame());
         this.input.keyboard.once('keydown-ENTER', () => this.startGame());
@@ -213,8 +214,10 @@ class MainScene extends Phaser.Scene {
         this.party = [];
         this.enemy = null;
         this.gameOver = false;
-        this.lastSkillTime = 0;
-        this.lastUltimateTime = 0;
+        this.lastSkillTime = -Infinity;
+        this.stage = 1;
+        this.lastAttackTime = -Infinity;
+        this.lastUltimateTime = -Infinity;
         this.partyCenter = { x: 400, y: 450 };
         this.facingDirection = { x: 0, y: -1 };  // 初期は上向き
     }
@@ -237,9 +240,10 @@ class MainScene extends Phaser.Scene {
 
         // 攻撃エフェクト用グラフィックス
         this.attackGraphics = this.add.graphics();
+        this.chargeGuide = this.add.graphics();
 
         // ゲーム開始メッセージ
-        this.showMessage('FIGHT!', 1500);
+        this.showMessage('第一幕・鬼退治', 1500, '#f5deb0');
     }
 
     createBackground() {
@@ -297,17 +301,21 @@ class MainScene extends Phaser.Scene {
     createCharacter(id, config, x, y) {
         const graphics = this.add.graphics();
 
-        // キャラクター本体（矩形）
+        graphics.fillStyle(0x132c25, 0.25);
+        graphics.fillEllipse(0, 8, config.size + 10, config.size);
         graphics.fillStyle(config.color, 1);
-        graphics.fillRect(-config.size/2, -config.size/2, config.size, config.size);
-
-        // 輪郭
-        graphics.lineStyle(2, 0xffffff, 0.8);
-        graphics.strokeRect(-config.size/2, -config.size/2, config.size, config.size);
-
-        // 方向インジケーター
-        graphics.fillStyle(0xffffff, 0.9);
-        graphics.fillTriangle(0, -config.size/2 - 5, -5, -config.size/2, 5, -config.size/2);
+        graphics.fillRoundedRect(-config.size/2, -5, config.size, config.size * .8, 6);
+        graphics.fillStyle(0xf1caa0, 1);
+        graphics.fillCircle(0, -10, config.size * .34);
+        graphics.fillStyle(0x24342d, 1);
+        graphics.fillRoundedRect(-config.size * .34, -21, config.size * .68, 9, 3);
+        graphics.lineStyle(3, 0xfff5d7, 1);
+        graphics.lineBetween(-config.size*.32, -15, config.size*.32, -15);
+        graphics.fillStyle(0x26382f, 1);
+        graphics.fillCircle(-4, -10, 1.5);
+        graphics.fillCircle(4, -10, 1.5);
+        graphics.lineStyle(4, 0xf5e6bd, 1);
+        graphics.lineBetween(config.size/2 + 4, 7, config.size/2 + 4, -22);
 
         const container = this.add.container(x, y, [graphics]);
 
@@ -325,7 +333,7 @@ class MainScene extends Phaser.Scene {
     }
 
     createEnemy() {
-        const config = CONFIG.enemy;
+        const config = { ...CONFIG.enemy, maxHp: 300 + (this.stage - 1) * 150, chargeInterval: 3000 - (this.stage - 1) * 400 };
         const graphics = this.add.graphics();
 
         // 鬼の本体（大きめの矩形）
@@ -356,7 +364,8 @@ class MainScene extends Phaser.Scene {
             alive: true,
             isCharging: false,
             chargeTarget: null,
-            lastChargeTime: 0,
+            lastChargeTime: this.time.now,
+            warningUntil: 0,
             moveDirection: { x: 1, y: 0 },
             moveTimer: 0
         };
@@ -428,14 +437,14 @@ class MainScene extends Phaser.Scene {
         this.enemyHpBarWidth = enemyBarWidth;
 
         // スキルクールダウン表示
-        this.cooldownText = this.add.text(CONFIG.width - 150, CONFIG.height - 60, '', {
+        this.cooldownText = this.add.text(CONFIG.width - 330, CONFIG.height - 60, '', {
             fontSize: '12px',
             fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
             color: '#aaaaaa'
         });
 
         // 操作説明
-        this.add.text(CONFIG.width - 150, CONFIG.height - 40, 'J:攻撃 K:スキル L:合体技', {
+        this.add.text(CONFIG.width - 330, CONFIG.height - 40, 'J:攻撃 K:スキル L:合体技', {
             fontSize: '11px',
             fontFamily: 'Hiragino Sans, Meiryo, sans-serif',
             color: '#888888'
@@ -453,7 +462,7 @@ class MainScene extends Phaser.Scene {
         };
 
         // 攻撃キー
-        this.input.keyboard.on('keydown-J', () => this.performAttack());
+        this.attackKey = this.input.keyboard.addKey('J');
         this.input.keyboard.on('keydown-K', () => this.performSkill());
         this.input.keyboard.on('keydown-L', () => this.performUltimate());
     }
@@ -461,6 +470,8 @@ class MainScene extends Phaser.Scene {
     update(time, delta) {
         if (this.gameOver) return;
 
+        delta = Math.min(delta, 50);
+        if (this.attackKey.isDown) this.performAttack();
         // パーティ移動
         this.updatePartyMovement(delta);
 
@@ -532,7 +543,7 @@ class MainScene extends Phaser.Scene {
             char.container.y = this.partyCenter.y + rotatedY;
 
             // 向きを更新
-            char.container.rotation = angle - Math.PI / 2;
+            char.container.rotation = angle;
         });
     }
 
@@ -542,13 +553,19 @@ class MainScene extends Phaser.Scene {
         const enemy = this.enemy;
         const config = enemy.config;
 
+        if (enemy.warningUntil) {
+            if (time < enemy.warningUntil) return;
+            enemy.warningUntil = 0;
+            enemy.isCharging = true;
+            this.chargeGuide.clear();
+        }
         // 突進中
         if (enemy.isCharging && enemy.chargeTarget) {
             const dx = enemy.chargeTarget.x - enemy.container.x;
             const dy = enemy.chargeTarget.y - enemy.container.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
-            if (dist < 10) {
+            if (dist < Math.max(10, config.chargeSpeed * delta / 1000)) {
                 enemy.isCharging = false;
                 enemy.chargeTarget = null;
             } else {
@@ -566,7 +583,7 @@ class MainScene extends Phaser.Scene {
             if (aliveChars.length > 0) {
                 const target = Phaser.Utils.Array.GetRandom(aliveChars);
                 enemy.chargeTarget = { x: target.container.x, y: target.container.y };
-                enemy.isCharging = true;
+                enemy.warningUntil = time + 700;
                 enemy.lastChargeTime = time;
 
                 // 突進エフェクト
@@ -574,6 +591,7 @@ class MainScene extends Phaser.Scene {
             }
         }
 
+        if (enemy.warningUntil) return;
         // 通常移動（ランダム）
         enemy.moveTimer -= delta;
         if (enemy.moveTimer <= 0) {
@@ -593,6 +611,8 @@ class MainScene extends Phaser.Scene {
     }
 
     showChargeWarning(x, y) {
+        this.chargeGuide.clear().lineStyle(22, 0xe9aa67, 0.35);
+        this.chargeGuide.lineBetween(x, y, this.enemy.chargeTarget.x, this.enemy.chargeTarget.y);
         const warning = this.add.text(x, y - 40, '！', {
             fontSize: '32px',
             fontFamily: 'sans-serif',
@@ -609,7 +629,8 @@ class MainScene extends Phaser.Scene {
     }
 
     performAttack() {
-        if (this.gameOver) return;
+        if (this.gameOver || this.time.now - this.lastAttackTime < 280) return;
+        this.lastAttackTime = this.time.now;
 
         this.attackGraphics.clear();
 
@@ -949,7 +970,8 @@ class MainScene extends Phaser.Scene {
     }
 
     damageCharacter(char, amount) {
-        if (!char.alive) return;
+        if (!char.alive || this.time.now < (char.invulnerableUntil || 0)) return;
+        char.invulnerableUntil = this.time.now + 800;
 
         char.hp -= amount;
 
@@ -1001,16 +1023,18 @@ class MainScene extends Phaser.Scene {
         // 敵HPバー更新
         this.enemyHpBar.clear();
         this.enemyHpBar.fillStyle(0xcc3333, 1);
-        const enemyHpRatio = this.enemy.hp / CONFIG.enemy.maxHp;
+        const enemyHpRatio = this.enemy.hp / this.enemy.config.maxHp;
         this.enemyHpBar.fillRect(0, 18, this.enemyHpBarWidth * enemyHpRatio, 20);
 
         // クールダウン表示
         const skillRemain = Math.max(0, CONFIG.skillCooldown - (time - this.lastSkillTime));
         const ultRemain = Math.max(0, CONFIG.ultimateCooldown - (time - this.lastUltimateTime));
 
-        let cooldownStr = '';
+        let cooldownStr = '第' + this.stage + '幕 / 三幕\n';
         if (skillRemain > 0) cooldownStr += `K: ${(skillRemain / 1000).toFixed(1)}s `;
         if (ultRemain > 0) cooldownStr += `L: ${(ultRemain / 1000).toFixed(1)}s`;
+        if (skillRemain === 0) cooldownStr += 'K: 回復・スキル OK ';
+        if (ultRemain === 0) cooldownStr += this.party.filter(c => c.alive).length >= 2 ? 'L: 合体技 OK' : 'L: 仲間が2人必要';
         this.cooldownText.setText(cooldownStr);
     }
 
@@ -1018,7 +1042,19 @@ class MainScene extends Phaser.Scene {
         // 勝利判定
         if (!this.enemy.alive) {
             this.gameOver = true;
-            this.showMessage('VICTORY!', 0, '#00ff00');
+            if (this.stage < 3) {
+                this.stage++;
+                this.showMessage('突破！ 次の鬼が来る…', 1400, '#f5deb0');
+                this.time.delayedCall(1500, () => {
+                    this.enemy.container.destroy();
+                    this.createEnemy();
+                    this.party.forEach(c => { if (c.alive) c.hp = Math.min(c.config.maxHp, c.hp + 25); });
+                    this.gameOver = false;
+                    this.showMessage('第' + this.stage + '幕・鬼退治', 1200, '#f5deb0');
+                });
+            } else {
+                this.showMessage('鬼退治、大成功！', 0, '#f5deb0');
+            }
             return;
         }
 
@@ -1026,7 +1062,7 @@ class MainScene extends Phaser.Scene {
         const aliveCount = this.party.filter(c => c.alive).length;
         if (aliveCount === 0) {
             this.gameOver = true;
-            this.showMessage('GAME OVER', 0, '#ff0000');
+            this.showMessage('また挑もう、鬼退治。', 0, '#ffb9a6');
         }
     }
 
@@ -1049,12 +1085,13 @@ class MainScene extends Phaser.Scene {
             });
         } else {
             // リスタート案内
-            const restartText = this.add.text(CONFIG.width / 2, CONFIG.height / 2 + 60, 'Press R to Restart', {
+            const restartText = this.add.text(CONFIG.width / 2, CONFIG.height / 2 + 60, 'R キー / クリックで、もう一度', {
                 fontSize: '20px',
                 fontFamily: 'sans-serif',
                 color: '#aaaaaa'
             }).setOrigin(0.5);
 
+            this.input.once('pointerdown', () => this.scene.start('TitleScene'));
             this.input.keyboard.once('keydown-R', () => {
                 this.scene.start('TitleScene');
             });
@@ -1068,6 +1105,7 @@ const game = new Phaser.Game({
     width: CONFIG.width,
     height: CONFIG.height,
     parent: 'game-container',
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     backgroundColor: CONFIG.backgroundColor,
     scene: [TitleScene, MainScene],
     physics: {
@@ -1077,3 +1115,4 @@ const game = new Phaser.Game({
         }
     }
 });
+
