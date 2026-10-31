@@ -83,9 +83,18 @@
             color: #555;
             text-shadow: 1px 1px 2px white;
         }
+        #gameContainer { width: min(800px, 100vw, calc(100dvh * 4 / 3)); }
+        #gameCanvas { display: block; width: 100%; height: auto; }
+        #ui { font-size: clamp(12px, 2.5vw, 20px); pointer-events: none; }
+        #instruction { width: 100%; text-align: center; font-size: clamp(10px, 2vw, 14px); pointer-events: none; }
+        #result { width: min(90%, 420px); padding: 20px; }
+        #result h2 { font-size: clamp(18px, 4vw, 28px); }
+        #result p { white-space: pre-line; }
+        .back-link { position: fixed; top: 8px; left: 10px; z-index: 2; background: #fffdf4e8; color: #263c34; padding: 4px 10px; border-radius: 5px; font-size: 12px; text-decoration: none; }
     </style>
 </head>
 <body>
+    <a class="back-link" href="../../">← ゲーム一覧</a>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         <div id="ui">
@@ -457,8 +466,8 @@
         // イベントリスナー
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const x = (e.clientX - rect.left) * canvas.width / rect.width;
+            const y = (e.clientY - rect.top) * canvas.height / rect.height;
             spawnAsh(x, y);
         });
 
@@ -466,8 +475,8 @@
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
             const touch = e.touches[0];
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
+            const x = (touch.clientX - rect.left) * canvas.width / rect.width;
+            const y = (touch.clientY - rect.top) * canvas.height / rect.height;
             spawnAsh(x, y);
         });
 
