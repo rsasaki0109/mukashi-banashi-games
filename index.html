@@ -3,21 +3,59 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="日本昔話をモチーフにしたブラウザゲーム集。昔話パーティーバトルと花咲じいさんを遊ぼう。">
-<title>昔話ゲーム集</title>
+<meta name="theme-color" content="#f5f1e8">
+<meta name="description" content="桃太郎と鬼退治、花咲じいさんと桜咲かせ。日本昔話の世界で遊べる、小さなブラウザゲーム集。">
+<title>昔話ゲーム集 ― むかしむかし、を遊ぼう。</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#fcf7ed;color:#352c29;font-family:system-ui,sans-serif;line-height:1.8}main{max-width:960px;margin:auto;padding:56px 24px}h1{font-size:clamp(2rem,6vw,3rem);margin:0}header p{color:#65564c}.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:24px;margin:36px 0}article{background:white;border:1px solid #e6d8c4;border-radius:18px;padding:28px}h2{margin:0 0 12px;font-size:1.4rem}.icon{font-size:3rem}a.play{display:inline-block;background:#8d3543;color:white;padding:10px 24px;border-radius:9px;text-decoration:none;font-weight:bold}a:hover{opacity:.8}a:focus-visible{outline:3px solid #214f85;outline-offset:4px}.note,footer{font-size:.9rem;color:#65564c}footer{margin-top:40px}footer a{color:inherit}
+:root{--paper:#f5f1e8;--ink:#263c34;--muted:#6a7166;--red:#ae4a38;--line:#d9dccb}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;line-height:1.8}body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.16;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23777' opacity='.3' filter='url(%23n)' d='M0 0h160v160H0z'/%3E%3C/svg%3E");z-index:5}a{color:inherit}a:focus-visible,summary:focus-visible{outline:3px solid var(--red);outline-offset:6px}.wrap{max-width:1160px;margin:auto;padding-inline:32px}nav{display:flex;justify-content:space-between;align-items:center;min-height:92px;border-bottom:1px solid var(--line);gap:20px}.brand{text-decoration:none;font-family:serif;font-weight:700;font-size:20px;letter-spacing:.08em}.seal{display:inline-grid;place-items:center;background:var(--red);color:#fff;border-radius:4px;width:32px;height:32px;font-size:19px;margin-right:10px}.nav-link{font-size:12px;text-decoration:none;letter-spacing:.08em}.hero{padding:82px 0 74px;display:grid;grid-template-columns:1.2fr 1fr;gap:35px;align-items:center}.eyebrow{font-size:11px;letter-spacing:.24em;font-weight:700;margin:0 0 22px}.hero h1{font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-weight:600;letter-spacing:.06em;font-size:clamp(38px,5.2vw,64px);line-height:1.5;margin:0 0 23px}.hero h1 span{color:var(--red)}.intro{font-size:14px;color:var(--muted);line-height:2.1;margin-bottom:28px}.button{display:inline-flex;align-items:center;justify-content:space-between;gap:34px;background:var(--ink);color:white;text-decoration:none;border-radius:5px;padding:13px 23px;font-size:13px;font-weight:650;transition:background .2s,transform .2s}.button:hover{background:#3c584b;transform:translateY(-2px)}.hero-art{width:100%;height:auto}.section-heading{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:26px}.section-heading h2{font-family:serif;font-size:27px;letter-spacing:.06em;margin:0}.section-heading p{font-size:12px;color:var(--muted);margin:0}.games{display:grid;grid-template-columns:1fr 1fr;gap:30px}.game{background:#fffdf7;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s}.game:hover{box-shadow:0 12px 28px #263c3410}.preview{height:270px;overflow:hidden;background:#17252c;position:relative}.preview img{height:100%;width:100%;object-fit:cover;display:block}.preview .tag{position:absolute;left:18px;top:18px;background:#fffdf7ed;border-radius:4px;padding:4px 11px;font-size:10px;font-weight:bold;letter-spacing:.06em}.flower-preview{background:#e4eadd}.flower-preview svg{height:100%;width:100%;display:block}.game-body{padding:26px 28px;display:flex;flex-direction:column;flex:1}.meta{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:10px;letter-spacing:.05em}.dot{height:6px;width:6px;border-radius:50%;background:#799275}.game h3{font-family:serif;font-size:25px;margin:9px 0}.description{font-size:13px;color:var(--muted);margin:0 0 20px}.game .button{width:100%;margin-top:auto}.game:nth-child(2) .button{background:var(--red)}.game:nth-child(2) .button:hover{background:#943c2d}details{font-size:12px;color:var(--muted);margin:0 0 20px}summary{cursor:pointer;display:list-item;padding:8px 0}details p{margin:7px 0 12px}kbd{font-family:inherit;font-size:10px;display:inline-block;border:1px solid var(--line);background:var(--paper);border-radius:3px;padding:0 5px;color:var(--ink)}.coming{margin-top:65px;padding-top:30px;border-top:1px solid var(--line)}.coming h2{font-family:serif;font-size:21px;margin:0}.coming>p{font-size:12px;color:var(--muted);margin:6px 0 22px}.upcoming{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.upcoming article{border:1px dashed #cbd0bf;border-radius:6px;padding:19px;display:flex;gap:13px;align-items:center}.upcoming span{font-size:24px;filter:grayscale(.5)}.upcoming h3{font-size:13px;margin:0;font-weight:600}.upcoming small{color:var(--muted);font-size:10px}footer{margin-top:65px;display:flex;justify-content:space-between;gap:20px;border-top:1px solid var(--line);padding:24px 0 36px;font-size:10px;color:var(--muted)}footer a{text-decoration:none}.skip{position:absolute;left:10px;top:-100px;background:white;padding:12px;z-index:10}.skip:focus{top:10px}
+@media(max-width:700px){.wrap{padding-inline:22px}nav{min-height:75px}.brand{font-size:16px}.nav-link{font-size:10px}.hero{padding:43px 0;grid-template-columns:1fr;gap:10px}.hero h1{font-size:43px}.hero-art{max-width:340px;justify-self:center}.games{grid-template-columns:1fr;gap:24px}.section-heading h2{font-size:23px}.section-heading p{font-size:10px}.preview{height:240px}.upcoming{grid-template-columns:1fr}.coming{margin-top:45px}footer{margin-top:45px}.game-body{padding:23px}.hero .intro{font-size:13px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style>
 </head>
 <body>
+<a class="skip" href="#games">ゲーム一覧へスキップ</a>
+<div class="wrap">
+<nav aria-label="メインナビゲーション"><a class="brand" href="./"><span class="seal" aria-hidden="true">昔</span>昔話ゲーム集</a><a class="nav-link" href="#games">ゲームを選ぶ ↗</a></nav>
 <main>
-<header><h1>昔話ゲーム集</h1><p>おなじみの物語が、遊べるゲームに。好きな昔話からはじめよう。</p></header>
-<section class="games" aria-label="ブラウザで遊べるゲーム">
-<article><div class="icon" aria-hidden="true">🍑 ⚔️ 👹</div><h2>昔話パーティーバトル</h2><p>桃太郎・金太郎・一寸法師を同時に操作して、鬼を倒そう！</p><p class="note">PCのキーボードで操作<br>移動：WASD / 矢印キー<br>攻撃：J　スキル：K　合体技：L<br>再挑戦：R（勝利・ゲームオーバー時）</p><a class="play" href="./mukashi_party_battle/">遊ぶ</a></article>
-<article><div class="icon" aria-hidden="true">🌸 🌳</div><h2>花咲じいさん ― 灰まきゲーム</h2><p>枯れ木に灰をまいて桜を咲かせよう。30秒で10〜20個を目指してね。</p><p class="note">クリック / タップで灰をまく<br>灰のまきすぎには気をつけよう！</p><a class="play" href="./hanasaka_jisan_ash_game/docs/">遊ぶ</a></article>
+<section class="hero" aria-labelledby="title">
+<div><p class="eyebrow">JAPANESE FOLKTALE GAMES</p><h1 id="title">むかしむかし、<br>を<span>遊ぼう。</span></h1><p class="intro">ページをめくるかわりに、物語のなかへ。<br>鬼に立ち向かったり、枯れ木に花を咲かせたり。<br>おなじみの昔話が、小さなゲームになりました。</p><a class="button" href="#games">物語を選ぶ <span aria-hidden="true">↓</span></a></div>
+<svg class="hero-art" viewBox="0 0 460 380" role="img" aria-label="赤い太陽と山並みの前で、桃からはじまる昔話の風景">
+<circle cx="253" cy="167" r="145" fill="#e9e2cc"/><circle cx="305" cy="112" r="51" fill="#bb5d48"/>
+<path d="M24 292 133 134 244 292Z" fill="#b0bdab"/><path d="m133 134-37 54 37-14 31 18Z" fill="#f5f1e8"/><path d="m160 292 111-122 118 122Z" fill="#859d87"/><path d="m260 292 77-95 99 95Z" fill="#496957"/>
+<path d="M25 295q116-41 208 0t205 0v25H25Z" fill="#d2d5bd"/><path d="M64 328q116-23 186 0t155 0" fill="none" stroke="#a8baab" stroke-width="3"/>
+<g transform="translate(150 238)"><path d="M74 70C-5 82-14 8 31 4 52 1 64 20 74 21 87 0 113-9 131 8c35 37-12 68-57 62Z" fill="#da9a8c" stroke="#263c34" stroke-width="2"/><path d="M74 21q-15 24 0 49" fill="none" stroke="#b56057" stroke-width="2"/><path d="M73 15Q76-23 110-20 104 7 73 15" fill="#496957"/><path d="m75 12 23-21" stroke="#f5f1e8" fill="none"/></g>
+<g fill="#f5f1e8"><path d="M31 101h74q-3-17-18-13-10-20-25-5-20-5-31 18"/><path d="M335 162h91q-4-17-23-13-12-23-32-7-23-5-36 20"/></g>
+<g fill="#bb5d48"><path d="m391 63 7 8-7 8-7-8Z"/><path d="m60 218 5 6-5 6-5-6Z"/></g>
+<text x="346" y="355" fill="#6a7166" font-family="serif" font-size="12" letter-spacing="4">めでたし、めでたし。</text>
+</svg>
 </section>
-<p class="note">「一寸法師 vs 鬼」「金太郎 vs 熊の相撲」「鶴の恩返し」はブラウザ版準備中です。</p>
-<footer><a href="https://github.com/rsasaki0109/mukashi-banashi-games">ソースコード・各ゲームの詳細を見る</a></footer>
+<section id="games" aria-labelledby="games-title">
+<div class="section-heading"><h2 id="games-title">どの物語で遊ぶ？</h2><p>インストール不要・ブラウザですぐに</p></div>
+<div class="games">
+<article class="game">
+<div class="preview"><img src="./mukashi_party_battle/assets/gameplay.gif" alt="桃太郎・金太郎・一寸法師が鬼と戦うゲーム画面" width="600" height="340" loading="lazy"><span class="tag">アクション</span></div>
+<div class="game-body"><div class="meta"><span class="dot"></span>PC・キーボード操作</div><h3>昔話パーティーバトル</h3><p class="description">桃太郎、金太郎、一寸法師。物語をこえた3人で、鬼退治へ出かけよう。力を合わせた合体技が勝利のカギ。</p>
+<details><summary>遊び方を見る</summary><p><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> 移動<br><kbd>J</kbd> 通常攻撃　<kbd>K</kbd> 固有スキル<br><kbd>L</kbd> 合体技　<kbd>R</kbd> 勝利・ゲームオーバー後に再挑戦</p></details>
+<a class="button" href="./mukashi_party_battle/">鬼退治に出かける <span aria-hidden="true">→</span></a></div>
+</article>
+<article class="game">
+<div class="preview flower-preview"><svg viewBox="0 0 600 340" role="img" aria-label="満開の桜の木を描いた花咲じいさんのイメージ">
+<rect width="600" height="340" fill="#e3ebdf"/><circle cx="457" cy="76" r="35" fill="#f5edd4"/><path d="M0 285q155-45 300 0t300-5v60H0Z" fill="#b4c5a1"/><path d="m303 286-5-116m3 68-51-54m50 27 45-50" stroke="#71614c" stroke-width="16" stroke-linecap="round" fill="none"/>
+<g fill="#e8b2b0"><circle cx="253" cy="141" r="52"/><circle cx="317" cy="104" r="56"/><circle cx="361" cy="154" r="52"/><circle cx="287" cy="169" r="55"/></g>
+<g fill="#f7dbce"><circle cx="254" cy="126" r="9"/><circle cx="310" cy="86" r="8"/><circle cx="357" cy="147" r="10"/><circle cx="279" cy="177" r="8"/><circle cx="322" cy="145" r="6"/><circle cx="240" cy="166" r="5"/><ellipse cx="409" cy="215" rx="5" ry="9" transform="rotate(35 409 215)"/><ellipse cx="205" cy="213" rx="5" ry="9" transform="rotate(-30 205 213)"/></g>
+<path d="m136 290 8-57h28l14 57Z" fill="#718e85"/><circle cx="158" cy="215" r="19" fill="#e8c5a0"/><path d="M137 214q-2-30 22-24 23-1 19 24l-13-13Z" fill="#fffdf4"/><path d="m166 247 30-27" stroke="#e8c5a0" stroke-width="9" stroke-linecap="round"/><g fill="#fffdf4"><circle cx="203" cy="207" r="3"/><circle cx="217" cy="190" r="3"/><circle cx="233" cy="201" r="2"/></g>
+</svg><span class="tag">お手軽ミニゲーム</span></div>
+<div class="game-body"><div class="meta"><span class="dot"></span>スマホ・PC対応 ／ 1回30秒</div><h3>花咲じいさん</h3><p class="description">枯れ木に、もう一度春を。灰をふわりとまいて、満開の桜を咲かせよう。ちょうどいい加減が大切です。</p><details><summary>遊び方を見る</summary><p>木の上をクリック・タップして灰をまきます。<br>30秒で木に当たった灰を10〜20個にしよう。<br>1回で3個の灰が出るので、まきすぎに注意！</p></details><a class="button" href="./hanasaka_jisan_ash_game/docs/">桜を咲かせにいく <span aria-hidden="true">→</span></a></div>
+</article>
+</div>
+</section>
+<section class="coming" aria-labelledby="coming-title"><h2 id="coming-title">つぎの物語は、準備中。</h2><p>ブラウザで遊べるようになるまで、もう少し。</p><div class="upcoming">
+<article><span aria-hidden="true">👹</span><div><h3>一寸法師 vs 鬼</h3><small>ブラウザ版準備中</small></div></article>
+<article><span aria-hidden="true">🐻</span><div><h3>金太郎 vs 熊の相撲</h3><small>ブラウザ版準備中</small></div></article>
+<article><span aria-hidden="true">🪶</span><div><h3>鶴の恩返し</h3><small>ブラウザ版準備中</small></div></article>
+</div></section>
 </main>
+<footer><span>昔話ゲーム集 · 小さな物語、大きな冒険。</span><a href="https://github.com/rsasaki0109/mukashi-banashi-games">GitHub ↗</a></footer>
+</div>
 </body>
 </html>
